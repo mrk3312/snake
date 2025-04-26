@@ -1,0 +1,13 @@
+# Ignore object files
+obj/
+
+# Ignore the built game
+game
+
+# Ignore Clang formatting config (optional)
+.clang-format
+
+# Ignore VS Code settings folder
+.vscode/
+
+
