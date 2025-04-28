@@ -179,19 +179,6 @@ void MoveBody(Cell map[20][20])
 	}
 }
 
-void DeleteMovementHistory(Cell map[20][20])
-{
-	for (int x = 0; x < 20; x++)
-	{
-		for (int y = 0; y < 20; y++)
-		{
-			Cell *cell = &map[x][y];
-			if (cell->renderTexture == NONE)
-				cell->cellDir = NOTCHANGED;				
-		}
-	}
-}
-
 int main()
 {
 	InitWindow(1000, 1000, "Snake");
@@ -241,7 +228,6 @@ int main()
 		{
 			MoveHead(&snakeData, map);
 			MoveBody(map);
-			DeleteMovementHistory(map);
 			skipTimer += 0.1f;
 		}
 		ClearBackground(RAYWHITE);
