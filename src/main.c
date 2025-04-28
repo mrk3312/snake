@@ -19,24 +19,23 @@ typedef enum Direction
 	DOWN
 } Direction;
 
-typedef struct Cell
-{
-	int x,y;
-	bool containsFruit;
-	Snake renderTexture;
-	Direction cellDir;
-} Cell;
-
 typedef struct Vec2
 {
 	int x,y;
 }Vec2;
 
+typedef struct Cell
+{
+	Vec2 pos;
+	bool containsFruit;
+	Snake renderTexture;
+	Direction cellDir;
+} Cell;
+
 typedef struct SnakeData
 {
 	Direction dir;
 	Vec2 head;
-	Vec2 tail;
 	int len;
 } SnakeData;
 
@@ -95,42 +94,6 @@ void MoveHead(SnakeData *snakeData, Cell map[20][20])
 	{
 		map[snakeData->head.x][snakeData->head.y].containsFruit = false;
 		snakeData->len++;
-	}
-}
-
-void MoveTail(SnakeData *snakeData, Cell map[20][20])
-{
-	switch (map[snakeData->tail.x][snakeData->tail.y].cellDir)
-	{
-	case LEFT:
-	{
-		map[snakeData->tail.x][snakeData->tail.y].renderTexture = NONE;
-		snakeData->tail.x--;
-		map[snakeData->tail.x][snakeData->tail.y].renderTexture = TAIL;
-		break;
-	}
-	case RIGHT:
-	{
-		map[snakeData->tail.x][snakeData->tail.y].renderTexture = NONE;
-		snakeData->tail.x++;
-		map[snakeData->tail.x][snakeData->tail.y].renderTexture = TAIL;
-		break;
-	}
-	case UP:
-	{
-		map[snakeData->tail.x][snakeData->tail.y].renderTexture = NONE;
-		snakeData->tail.y--;
-		map[snakeData->tail.x][snakeData->tail.y].renderTexture = TAIL;
-		break;
-	}
-	case DOWN:
-	{
-		map[snakeData->tail.x][snakeData->tail.y].renderTexture = NONE;
-		snakeData->tail.y++;
-		map[snakeData->tail.x][snakeData->tail.y].renderTexture = TAIL;
-		break;
-	}
-	case NOTCHANGED: break;
 	}
 }
 
@@ -241,16 +204,14 @@ int main()
 	{
 		for (int y = 0; y < 20; y++)
 		{
-			map[x][y] = (Cell){.x = x, .y = y, .cellDir = NOTCHANGED, .containsFruit = false, .renderTexture = NONE};
+			map[x][y] = (Cell){.pos.x = x, .pos.y = y, .cellDir = NOTCHANGED, .containsFruit = false, .renderTexture = NONE};
 		}
 	}
 	map[0][0].renderTexture = TAIL;
 	map[1][0].renderTexture = HEAD;
 	map[15][15].containsFruit = true;
-	snakeData.tail.x = map[0][0].x;
-	snakeData.tail.y = map[0][0].y;
-	snakeData.head.x = map[1][0].x;
-	snakeData.head.y = map[1][0].y;
+	snakeData.head.x = map[1][0].pos.x;
+	snakeData.head.y = map[1][0].pos.y;
 
 	float skipTimer = 0.0f;
 
