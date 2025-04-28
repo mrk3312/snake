@@ -58,28 +58,33 @@ void MoveHead(SnakeData *snakeData, Cell map[20][20])
 	{
 	case LEFT:
 	{
-		map[snakeData->head.x][snakeData->head.y] = (Cell) {.cellDir = LEFT, .renderTexture = NONE};
+		map[snakeData->head.x][snakeData->head.y].cellDir = LEFT;
+		map[snakeData->head.x][snakeData->head.y].renderTexture = NONE;
 		snakeData->head.x--;
 		map[snakeData->head.x][snakeData->head.y].renderTexture = HEAD;
 		break;
 	}
 	case RIGHT:
 	{
-		map[snakeData->head.x][snakeData->head.y] = (Cell) {.cellDir = RIGHT, .renderTexture = NONE};
+		map[snakeData->head.x][snakeData->head.y].cellDir = RIGHT;
+		map[snakeData->head.x][snakeData->head.y].renderTexture = NONE;
 		snakeData->head.x++;
 		map[snakeData->head.x][snakeData->head.y].renderTexture = HEAD;
 		break;
 	}
 	case UP:
 	{
-		map[snakeData->head.x][snakeData->head.y] = (Cell) {.cellDir = UP, .renderTexture = NONE};
+		map[snakeData->head.x][snakeData->head.y].cellDir = UP;
+		map[snakeData->head.x][snakeData->head.y].renderTexture = NONE;
 		snakeData->head.y--;
 		map[snakeData->head.x][snakeData->head.y].renderTexture = HEAD;
 		break;
 	}
 	case DOWN:
 	{
-		map[snakeData->head.x][snakeData->head.y] = (Cell) {.cellDir = DOWN, .renderTexture = NONE};
+		
+		map[snakeData->head.x][snakeData->head.y].cellDir = DOWN;
+		map[snakeData->head.x][snakeData->head.y].renderTexture = NONE;
 		snakeData->head.y++;
 		map[snakeData->head.x][snakeData->head.y].renderTexture = HEAD;
 		break;
@@ -241,11 +246,11 @@ int main()
 	}
 	map[0][0].renderTexture = TAIL;
 	map[1][0].renderTexture = HEAD;
+	map[15][15].containsFruit = true;
 	snakeData.tail.x = map[0][0].x;
 	snakeData.tail.y = map[0][0].y;
 	snakeData.head.x = map[1][0].x;
 	snakeData.head.y = map[1][0].y;
-	map[15][15].containsFruit = true;
 
 	float skipTimer = 0.0f;
 
@@ -274,10 +279,9 @@ int main()
 		if(skipTimer <= 0)
 		{
 			MoveHead(&snakeData, map);
-			MoveTail(&snakeData, map);
-			//MoveBody(map);
+			MoveBody(map);
 			DeleteMovementHistory(map);
-			skipTimer += 0.5f;
+			skipTimer += 0.1f;
 		}
 		ClearBackground(RAYWHITE);
 		BeginDrawing();
