@@ -27,16 +27,22 @@ typedef struct Vec2
 typedef struct Cell
 {
 	Vec2 pos;
-	bool containsFruit;
 	Snake renderTexture;
 	Direction cellDir;
+	bool containsFruit;
 } Cell;
+
+typedef struct BodyData 
+{
+	Vec2 pos;
+	Snake renderTexture;
+	Direction dir;
+} BodyData;
 
 typedef struct SnakeData
 {
 	Direction dir;
 	Vec2 head;
-	int len;
 } SnakeData;
 
 bool IsHorizontal(Direction dir) {return dir == LEFT || dir == RIGHT;}
@@ -51,8 +57,12 @@ Direction DirectionKey(void)
 	else return NOTCHANGED;
 }
 
-void MoveHead(SnakeData *snakeData, Cell map[20][20])
+void MoveSnake(SnakeData *snakeData, Cell map[20][20])
 {
+	bool hasPlayerEatenFruit = false;
+	bool hasPlayerGrown = false;
+
+	// Part of the function that moves the head
 	switch (snakeData->dir)
 	{
 	case LEFT:
@@ -93,90 +103,131 @@ void MoveHead(SnakeData *snakeData, Cell map[20][20])
 	if (map[snakeData->head.x][snakeData->head.y].containsFruit)
 	{
 		map[snakeData->head.x][snakeData->head.y].containsFruit = false;
-		snakeData->len++;
+		hasPlayerEatenFruit = true;
 	}
-}
 
-void MoveBody(Cell map[20][20])
-{
-	bool updatedTail = false;
+
+	// Determine tail and body positions
+	BodyData *bodyData = NULL;
+	int capacity = 0;
+	int numberBodyParts = 0;
+
 	for (int x = 0; x < 20; x++)
 	{
 		for (int y = 0; y < 20; y++)
 		{
 			Cell *cell = &map[x][y];
-			if (cell->renderTexture != HEAD)
+			if(cell->renderTexture == BODY || cell->renderTexture == TAIL)
 			{
-				switch (cell->cellDir)
+				if (capacity < numberBodyParts + 2)
+				{
+					capacity = (capacity == 0) ? 4 : capacity * 2;
+					BodyData *temp = realloc(bodyData, sizeof(BodyData) * capacity);
+					if (temp == NULL)
+					{
+						printf("Memory Allocation Error");
+					}
+					bodyData = temp;
+				}
+				bodyData[numberBodyParts].dir = cell->cellDir;
+				bodyData[numberBodyParts].pos = cell->pos;
+				bodyData[numberBodyParts].renderTexture = cell->renderTexture;
+				switch(bodyData[numberBodyParts].dir)
 				{
 					case LEFT:
 					{
-						switch(map[x][y].renderTexture)
+						if (hasPlayerEatenFruit && cell->renderTexture == TAIL)
 						{
-							case TAIL:
-							{
-								if (!updatedTail)
-								{
-									map[x][y].renderTexture = NONE;
-									map[x-1][y].renderTexture = TAIL;
-									updatedTail = true;
-								}
-								break;
-							}
+							// add body data to next array element
+							numberBodyParts++;
+							bodyData[numberBodyParts].pos = map[x-1][y].pos;
+							bodyData[numberBodyParts].dir = map[x-1][y].cellDir;
+							bodyData[numberBodyParts].renderTexture = BODY;
+							hasPlayerGrown = true;
 						}
+						else
+							// move the part to the left
+							bodyData[numberBodyParts].pos.x--;
+						break;
 					}
 					case RIGHT:
 					{
-						switch(map[x][y].renderTexture)
+						if (hasPlayerEatenFruit && cell->renderTexture == TAIL)
 						{
-							case TAIL:
-							{
-								if (!updatedTail)
-								{
-									map[x][y].renderTexture = NONE;
-									map[x+1][y].renderTexture = TAIL;
-									updatedTail = true;
-								}
-								break;
-							}
+							// add body data to next array element
+							numberBodyParts++;
+							bodyData[numberBodyParts].pos = map[x+1][y].pos;
+							bodyData[numberBodyParts].dir = map[x+1][y].cellDir;
+							bodyData[numberBodyParts].renderTexture = BODY;
+							hasPlayerGrown = true;
 						}
+						else
+							// move the part to the right
+							bodyData[numberBodyParts].pos.x++;
+						break;
 					}
-					case UP:
+					case UP: 
 					{
-						switch(map[x][y].renderTexture)
+						if (hasPlayerEatenFruit && cell->renderTexture == TAIL)
 						{
-							case TAIL:
-							{
-								if (!updatedTail)
-								{
-									map[x][y].renderTexture = NONE;
-									map[x][y-1].renderTexture = TAIL;
-									updatedTail = true;
-								}
-								break;
-							}
+							// add body data to next array element
+							numberBodyParts++;
+							bodyData[numberBodyParts].pos = map[x][y-1].pos;
+							bodyData[numberBodyParts].dir = map[x][y-1].cellDir;
+							bodyData[numberBodyParts].renderTexture = BODY;
+							hasPlayerGrown = true;
 						}
+						else
+							// move the part up
+							bodyData[numberBodyParts].pos.y--;
+						break;
 					}
-					case DOWN:
+					case DOWN: 
 					{
-						switch(map[x][y].renderTexture)
+						if (hasPlayerEatenFruit && cell->renderTexture == TAIL)
 						{
-							case TAIL:
-							{
-								if (!updatedTail)
-								{
-									map[x][y].renderTexture = NONE;
-									map[x][y+1].renderTexture = TAIL;
-									updatedTail = true;
-								}
-								break;
-							}
+							// add body data to next array element
+							numberBodyParts++;
+							bodyData[numberBodyParts].pos = map[x][y+1].pos;
+							bodyData[numberBodyParts].dir = map[x][y+1].cellDir;
+							bodyData[numberBodyParts].renderTexture = BODY;
+							hasPlayerGrown = true;
 						}
+						else
+							// move the part down
+							bodyData[numberBodyParts].pos.y++;
+						break;
 					}
 				}
+
+				if (hasPlayerGrown)
+					hasPlayerEatenFruit = false;
+
+				numberBodyParts++;
 			}
 		}
 	}
+
+	printf("number of body parts:%d\n", numberBodyParts);
+	for (int x = 0; x < 20; x++)
+	{
+		for (int y = 0; y < 20; y++)
+		{
+			Cell *cell = &map[x][y];
+			if (cell->renderTexture != HEAD && cell->renderTexture != NONE)
+			{
+				cell->renderTexture = NONE;
+			}
+		}
+	}
+
+	for (int i = 0; i < numberBodyParts; i++)
+	{
+		Cell *cell = &map[bodyData[i].pos.x][bodyData[i].pos.y];
+		cell->renderTexture = bodyData[i].renderTexture;
+	}
+
+	free(bodyData);
 }
 
 int main()
@@ -186,7 +237,6 @@ int main()
 	Direction currentDirection = NOTCHANGED;
 	SnakeData snakeData;
 	snakeData.dir = NOTCHANGED;
-	snakeData.len = 2;
 	for (int x = 0; x < 20; x++)
 	{
 		for (int y = 0; y < 20; y++)
@@ -196,7 +246,9 @@ int main()
 	}
 	map[0][0].renderTexture = TAIL;
 	map[1][0].renderTexture = HEAD;
-	map[15][15].containsFruit = true;
+	map[4][4].containsFruit = true;
+	map[6][4].containsFruit = true;
+	map[8][4].containsFruit = true;
 	snakeData.head.x = map[1][0].pos.x;
 	snakeData.head.y = map[1][0].pos.y;
 
@@ -226,9 +278,8 @@ int main()
 
 		if(skipTimer <= 0)
 		{
-			MoveHead(&snakeData, map);
-			MoveBody(map);
-			skipTimer += 0.1f;
+			MoveSnake(&snakeData, map);
+			skipTimer += 0.15f;
 		}
 		ClearBackground(RAYWHITE);
 		BeginDrawing();
