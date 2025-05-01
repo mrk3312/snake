@@ -36,7 +36,6 @@ typedef struct BodyData
 {
 	Vec2 pos;
 	Snake renderTexture;
-	Direction dir;
 } BodyData;
 
 typedef struct SnakeData
@@ -57,6 +56,10 @@ Direction DirectionKey(void)
 	else return NOTCHANGED;
 }
 
+bool IsHeadPosInSync(SnakeData *snakeData)
+{
+	return false;
+}
 void MoveSnake(SnakeData *snakeData, Cell map[20][20])
 {
 	bool hasPlayerEatenFruit = false;
@@ -129,20 +132,20 @@ void MoveSnake(SnakeData *snakeData, Cell map[20][20])
 					}
 					bodyData = temp;
 				}
-				bodyData[numberBodyParts].dir = cell->cellDir;
 				bodyData[numberBodyParts].pos = cell->pos;
 				bodyData[numberBodyParts].renderTexture = cell->renderTexture;
-				switch(bodyData[numberBodyParts].dir)
+				
+				if (hasPlayerEatenFruit && cell->renderTexture == TAIL)
+					numberBodyParts++;
+
+				switch(cell->cellDir)
 				{
 					case LEFT:
 					{
 						if (hasPlayerEatenFruit && cell->renderTexture == TAIL)
 						{
 							// add body data to next array element
-							numberBodyParts++;
 							bodyData[numberBodyParts].pos = map[x-1][y].pos;
-							bodyData[numberBodyParts].dir = map[x-1][y].cellDir;
-							bodyData[numberBodyParts].renderTexture = BODY;
 							hasPlayerGrown = true;
 						}
 						else
@@ -155,10 +158,7 @@ void MoveSnake(SnakeData *snakeData, Cell map[20][20])
 						if (hasPlayerEatenFruit && cell->renderTexture == TAIL)
 						{
 							// add body data to next array element
-							numberBodyParts++;
 							bodyData[numberBodyParts].pos = map[x+1][y].pos;
-							bodyData[numberBodyParts].dir = map[x+1][y].cellDir;
-							bodyData[numberBodyParts].renderTexture = BODY;
 							hasPlayerGrown = true;
 						}
 						else
@@ -166,15 +166,12 @@ void MoveSnake(SnakeData *snakeData, Cell map[20][20])
 							bodyData[numberBodyParts].pos.x++;
 						break;
 					}
-					case UP: 
+					case UP:
 					{
 						if (hasPlayerEatenFruit && cell->renderTexture == TAIL)
 						{
 							// add body data to next array element
-							numberBodyParts++;
 							bodyData[numberBodyParts].pos = map[x][y-1].pos;
-							bodyData[numberBodyParts].dir = map[x][y-1].cellDir;
-							bodyData[numberBodyParts].renderTexture = BODY;
 							hasPlayerGrown = true;
 						}
 						else
@@ -187,10 +184,7 @@ void MoveSnake(SnakeData *snakeData, Cell map[20][20])
 						if (hasPlayerEatenFruit && cell->renderTexture == TAIL)
 						{
 							// add body data to next array element
-							numberBodyParts++;
 							bodyData[numberBodyParts].pos = map[x][y+1].pos;
-							bodyData[numberBodyParts].dir = map[x][y+1].cellDir;
-							bodyData[numberBodyParts].renderTexture = BODY;
 							hasPlayerGrown = true;
 						}
 						else
@@ -201,7 +195,10 @@ void MoveSnake(SnakeData *snakeData, Cell map[20][20])
 				}
 
 				if (hasPlayerGrown)
+				{
+					bodyData[numberBodyParts].renderTexture = BODY;
 					hasPlayerEatenFruit = false;
+				}
 
 				numberBodyParts++;
 			}
@@ -247,13 +244,11 @@ int main()
 	map[0][0].renderTexture = TAIL;
 	map[1][0].renderTexture = HEAD;
 	map[4][4].containsFruit = true;
-	map[6][4].containsFruit = true;
-	map[8][4].containsFruit = true;
 	snakeData.head.x = map[1][0].pos.x;
 	snakeData.head.y = map[1][0].pos.y;
-
 	float skipTimer = 0.0f;
 
+	bool isHeadPosUpdated = false;
 	bool initMovement = false;
 	while (!WindowShouldClose())
 	{
@@ -269,16 +264,17 @@ int main()
 		float deltaTime = GetFrameTime();
 		Direction futureDirection = DirectionKey();
 
-		if (futureDirection != NOTCHANGED)
+		if (futureDirection != NOTCHANGED && !((IsHorizontal(snakeData.dir) && IsHorizontal(futureDirection)) || (IsVertical(snakeData.dir) && IsVertical(futureDirection))) && isHeadPosUpdated)
 		{
-			if (!((IsHorizontal(snakeData.dir) && IsHorizontal(futureDirection)) || (IsVertical(snakeData.dir) && IsVertical(futureDirection))))
-				snakeData.dir = futureDirection;
+			snakeData.dir = futureDirection;
+			isHeadPosUpdated = false;
 		}
 		skipTimer -= deltaTime;
 
 		if(skipTimer <= 0)
 		{
 			MoveSnake(&snakeData, map);
+			isHeadPosUpdated = true;
 			skipTimer += 0.15f;
 		}
 		ClearBackground(RAYWHITE);
@@ -288,7 +284,9 @@ int main()
 			for (int y = 0; y < 20; y++)
 			{
 				if (map[x][y].renderTexture == HEAD)
+				{
 					DrawRectangle(x * 50, y * 50, 50, 50, RED);
+				}
 				else if (map[x][y].renderTexture == TAIL)
 					DrawRectangle(x * 50, y * 50, 50, 50, BLUE);
 				else if (map[x][y].renderTexture == BODY)
