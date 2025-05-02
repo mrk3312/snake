@@ -19,7 +19,8 @@
 		"string.h": "c",
 		"raylib.h": "c",
 		"math.h": "c",
-		"stdio.h": "c"
+		"stdio.h": "c",
+		"snake.h": "c"
 	},
 	"C_Cpp.default.compilerPath": "C:/raylib/w64devkit/bin/gcc.exe"
 }
