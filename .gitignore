@@ -4,7 +4,7 @@ obj/
 # Ignore the built game
 game
 
-# Ignore Clang formatting config (optional)
+# Ignore Clang formatting config
 .clang-format
 
 # Ignore VS Code settings folder
