@@ -41,18 +41,20 @@ typedef struct Cell
 	Vec2 pos;
 	GameTexture renderTexture;
 	Direction cellFutureDir;
-	bool isBorder;
+	bool isBorder, headChangedDirection;
 } Cell;
 
 typedef struct SnakeData
 {
-	DirectionData snakeDirData;
 	Vec2 head;
+	bool headChangedDirection;
 } SnakeData;
 
 typedef struct GameState
 {
 	bool isHeadPosUpdated, initMovement, hasHeadEatenFruit, isFruitPlaced;
+	Direction currentDirection;
+	Direction futureDirection;
 } GameState;
 
 typedef struct BodyData 
@@ -69,7 +71,7 @@ typedef struct DynamicArray
 }DynamicArray;
 
 Direction DirectionKey(void);
-void UpdateHeadPos(SnakeData*, Cell[20][20]);
+void UpdateHeadPos(SnakeData*, GameState*, Cell[20][20]);
 void UpdateSnakeDir(SnakeData*, GameState*);
 void ClearGraphics(Cell[20][20]);
 void ManageArraySize(DynamicArray*);
@@ -81,7 +83,7 @@ void PutSnakeOnMap(Cell[20][20], DynamicArray*, SnakeData*, GameState*);
 
 bool IsHorizontal(Direction dir);
 bool IsVertical(Direction dir);
-bool CanMovementBeUpdated(SnakeData*, GameState*);
+bool CanMovementBeUpdated(GameState*);
 bool DoesHeadTouchBodyOrBorder(SnakeData*, Cell[20][20]);
 bool HasHeadEaten(SnakeData*, Cell[20][20]);
 

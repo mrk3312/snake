@@ -4,8 +4,6 @@ void InitGame(Cell map[20][20], SnakeData *snakeData)
 {
 
 	InitWindow(1000, 1000, "Snake");
-	snakeData->snakeDirData.futureDir = NOTCHANGED;
-	snakeData->snakeDirData.currentDir = NOTCHANGED;
 	GenerateMap(map);
 	InitSnake(map, snakeData);
 }
@@ -16,7 +14,22 @@ void GenerateMap(Cell map[20][20])
 	{
 		for (int y = 0; y < 20; y++)
 		{
-			map[x][y] = (Cell){.pos.x = x, .pos.y = y, .cellFutureDir = NOTCHANGED, .isBorder = (x == 0 || y == 0 || x == 19 || y == 19) ? true : false, .renderTexture = NONE};
+			map[x][y] = (Cell){.pos.x = x, .pos.y = y, .cellFutureDir = NOTCHANGED, .headChangedDirection = false, .isBorder = (x == 0 || y == 0 || x == 19 || y == 19) ? true : false, .renderTexture = NONE};
+		}
+	}
+}
+
+void ClearGraphics(Cell map[20][20])
+{
+    for (int x = 0; x < 20; x++)
+	{
+		for (int y = 0; y < 20; y++)
+		{
+			Cell *cell = &map[x][y];
+			if (cell->renderTexture == NONE)
+				cell->headChangedDirection = false;
+            if (cell->renderTexture != FRUIT)
+			    cell->renderTexture = NONE;
 		}
 	}
 }
@@ -47,7 +60,7 @@ void RenderMap(Cell map[20][20], SnakeData *snakeData, GameState *gameState, Tex
 			{
 				case HEAD:
 				{
-					switch(snakeData->snakeDirData.currentDir)
+					switch(gameState->currentDirection)
 					{
 						case LEFT:
 						{
@@ -162,13 +175,13 @@ void InitGameState(GameState *gameState)
 	gameState->isHeadPosUpdated = false;
 	gameState->hasHeadEatenFruit = false;
 	gameState->isFruitPlaced = false;
+	gameState->futureDirection = NOTCHANGED;
+	gameState->futureDirection = NOTCHANGED;
 }
 
 void RefreshGame(Cell map[20][20], SnakeData *snakeData, GameState *gameState)
 {
 	InitGameState(gameState);
-	snakeData->snakeDirData.futureDir = NOTCHANGED;
-	snakeData->snakeDirData.currentDir = NOTCHANGED;
 	for (int x = 0; x < 20; x++)
 	{
 		for (int y = 0; y < 20; y++)
@@ -176,6 +189,7 @@ void RefreshGame(Cell map[20][20], SnakeData *snakeData, GameState *gameState)
 			Cell *cell = &map[x][y];
 			cell->renderTexture = NONE;
 			cell->cellFutureDir = NOTCHANGED;
+			cell->headChangedDirection = false;
 		}
 	}
 	InitSnake(map, snakeData);

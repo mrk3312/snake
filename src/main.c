@@ -18,8 +18,8 @@ int main(void)
 	{
 		if (!gameState.initMovement)
 		{
-			snakeData.snakeDirData.futureDir = DirectionKey();
-			if (snakeData.snakeDirData.futureDir != NOTCHANGED && snakeData.snakeDirData.futureDir != LEFT)
+			gameState.futureDirection = DirectionKey();
+			if (gameState.futureDirection != NOTCHANGED && gameState.futureDirection != LEFT)
 			{
 				gameState.initMovement = true;
 				map[3][9].cellFutureDir = RIGHT;
@@ -28,9 +28,9 @@ int main(void)
 		}
 
 		float deltaTime = GetFrameTime();
-		snakeData.snakeDirData.futureDir = DirectionKey();
+		gameState.futureDirection = DirectionKey();
 
-		if (CanMovementBeUpdated(&snakeData, &gameState))
+		if (CanMovementBeUpdated(&gameState))
 		{
 			UpdateSnakeDir(&snakeData, &gameState);
 		}
@@ -39,12 +39,13 @@ int main(void)
 
 		if(skipTimer <= 0)
 		{
-			UpdateHeadPos(&snakeData, map);
+			UpdateHeadPos(&snakeData, &gameState, map);
 			gameState.isHeadPosUpdated = true;
 
 			if (DoesHeadTouchBodyOrBorder(&snakeData, map))
 			{
 				RefreshGame(map, &snakeData, &gameState);
+				printf("snake died\n");
 				//currentDirection = NONE; // Temporary solution (if it's in refresh game it doesn't work)
 			}
 			

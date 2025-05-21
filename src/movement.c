@@ -2,7 +2,7 @@
 
 bool IsHorizontal(Direction dir) {return dir == LEFT || dir == RIGHT;}
 bool IsVertical(Direction dir) {return dir == UP || dir == DOWN;}
-bool CanMovementBeUpdated(SnakeData *snakeData, GameState *gameState) {return snakeData->snakeDirData.futureDir != NOTCHANGED && !((IsHorizontal(snakeData->snakeDirData.currentDir) && IsHorizontal(snakeData->snakeDirData.futureDir)) || (IsVertical(snakeData->snakeDirData.currentDir) && IsVertical(snakeData->snakeDirData.futureDir))) && gameState->isHeadPosUpdated && gameState->initMovement;}
+bool CanMovementBeUpdated(GameState *gameState) {return gameState->futureDirection != NOTCHANGED && !((IsHorizontal(gameState->currentDirection) && IsHorizontal(gameState->futureDirection)) || (IsVertical(gameState->currentDirection) && IsVertical(gameState->futureDirection))) && gameState->isHeadPosUpdated && gameState->initMovement;}
 bool DoesHeadTouchBodyOrBorder(SnakeData *snakeData, Cell map[20][20]) {
 	return map[snakeData->head.x][snakeData->head.y].isBorder || 
 	        (map[snakeData->head.x][snakeData->head.y].renderTexture == TAIL || 
@@ -21,14 +21,18 @@ Direction DirectionKey(void)
 
 void UpdateSnakeDir(SnakeData *snakeData, GameState *gameState)
 {
-    snakeData->snakeDirData.currentDir = snakeData->snakeDirData.futureDir;
+    gameState->currentDirection = gameState->futureDirection;
+    snakeData->headChangedDirection = true;
     gameState->isHeadPosUpdated = false;
 }
 
-void UpdateHeadPos(SnakeData *snakeData, Cell map[20][20])
+void UpdateHeadPos(SnakeData *snakeData, GameState *gameState, Cell map[20][20])
 {
-    map[snakeData->head.x][snakeData->head.y].cellFutureDir = snakeData->snakeDirData.currentDir;
-    switch (snakeData->snakeDirData.currentDir)
+    map[snakeData->head.x][snakeData->head.y].cellFutureDir = gameState->currentDirection;
+    if (snakeData->headChangedDirection)
+        map[snakeData->head.x][snakeData->head.y].headChangedDirection = true;
+    
+    switch (gameState->currentDirection)
     {
         case LEFT: snakeData->head.x--; break;
         case RIGHT: snakeData->head.x++; break;
@@ -36,19 +40,6 @@ void UpdateHeadPos(SnakeData *snakeData, Cell map[20][20])
         case DOWN: snakeData->head.y++; break;
         case NOTCHANGED: break;
     }
-}
-
-void ClearGraphics(Cell map[20][20])
-{
-    for (int x = 0; x < 20; x++)
-	{
-		for (int y = 0; y < 20; y++)
-		{
-			Cell *cell = &map[x][y];
-            if (cell->renderTexture != FRUIT)
-			    cell->renderTexture = NONE;
-		}
-	}
 }
 
 void ManageArraySize(DynamicArray *dynamicArray)
