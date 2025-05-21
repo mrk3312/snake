@@ -2,9 +2,13 @@
 
 bool IsHorizontal(Direction dir) {return dir == LEFT || dir == RIGHT;}
 bool IsVertical(Direction dir) {return dir == UP || dir == DOWN;}
-bool CanMovementBeUpdated(Direction futureDirection, SnakeData *snakeData, SnakeState *snakeState) {return futureDirection != NOTCHANGED && !((IsHorizontal(snakeData->dir) && IsHorizontal(futureDirection)) || (IsVertical(snakeData->dir) && IsVertical(futureDirection))) && snakeState->isHeadPosUpdated && snakeState->initMovement;}
-bool DoesHeadTouchBodyOrBorder(SnakeData *snakeData, Cell map[20][20]) {return map[snakeData->head.x][snakeData->head.y].isBorder || (map[snakeData->head.x][snakeData->head.y].renderTexture != NONE && (map[snakeData->head.x][snakeData->head.y].renderTexture != HEAD));}
-bool HasHeadEaten(SnakeData *snakeData, Cell map[20][20]) {return map[snakeData->head.x][snakeData->head.y].containsFruit;}
+bool CanMovementBeUpdated(SnakeData *snakeData, GameState *gameState) {return snakeData->snakeDirData.futureDir != NOTCHANGED && !((IsHorizontal(snakeData->snakeDirData.currentDir) && IsHorizontal(snakeData->snakeDirData.futureDir)) || (IsVertical(snakeData->snakeDirData.currentDir) && IsVertical(snakeData->snakeDirData.futureDir))) && gameState->isHeadPosUpdated && gameState->initMovement;}
+bool DoesHeadTouchBodyOrBorder(SnakeData *snakeData, Cell map[20][20]) {
+	return map[snakeData->head.pos.x][snakeData->head.pos.y].isBorder || 
+	        (map[snakeData->head.pos.x][snakeData->head.pos.y].renderTexture == TAIL || 
+		    (map[snakeData->head.pos.x][snakeData->head.pos.y].renderTexture == BODY));
+}
+bool HasHeadEaten(SnakeData *snakeData, Cell map[20][20]) {return map[snakeData->head.pos.x][snakeData->head.pos.y].renderTexture == FRUIT;}
 
 Direction DirectionKey(void)
 {
@@ -15,112 +19,113 @@ Direction DirectionKey(void)
 	else return NOTCHANGED;
 }
 
-void UpdateSnakeDir(SnakeData *snakeData, SnakeState *snakeState, Direction futureDirection)
+void UpdateSnakeDir(SnakeData *snakeData, GameState *gameState)
 {
-    snakeData->dir = futureDirection;
-    snakeState->isHeadPosUpdated = false; 
+    snakeData->head.prevDir = snakeData->snakeDirData.currentDir;
+    snakeData->snakeDirData.currentDir = snakeData->snakeDirData.futureDir;
+    gameState->isHeadPosUpdated = false;
 }
 
 void UpdateHeadPos(SnakeData *snakeData, Cell map[20][20])
 {
-
-		map[snakeData->head.x][snakeData->head.y].cellDir = snakeData->dir;
-		map[snakeData->head.x][snakeData->head.y].renderTexture = NONE;
-		switch (snakeData->dir)
-        {
-            case LEFT: snakeData->head.x--; break;
-            case RIGHT: snakeData->head.x++; break;
-            case UP: snakeData->head.y--; break;
-            case DOWN: snakeData->head.y++; break;
-            case NOTCHANGED: break;
-        }
-		map[snakeData->head.x][snakeData->head.y].renderTexture = HEAD;
+    map[snakeData->head.pos.x][snakeData->head.pos.y].cellDirData.futureDir = snakeData->snakeDirData.currentDir;
+    map[snakeData->head.pos.x][snakeData->head.pos.y].cellDirData.lastDir = snakeData->head.prevDir;
+    switch (snakeData->snakeDirData.currentDir)
+    {
+        case LEFT: snakeData->head.pos.x--; break;
+        case RIGHT: snakeData->head.pos.x++; break;
+        case UP: snakeData->head.pos.y--; break;
+        case DOWN: snakeData->head.pos.y++; break;
+        case NOTCHANGED: break;
+    }
 }
 
-void ClearBodyGraphics(Cell map[20][20])
+void ClearGraphics(Cell map[20][20])
 {
     for (int x = 0; x < 20; x++)
 	{
 		for (int y = 0; y < 20; y++)
 		{
 			Cell *cell = &map[x][y];
-			if (cell->renderTexture != HEAD && cell->renderTexture != NONE)
-			{
-				cell->renderTexture = NONE;
-			}
+            if (cell->renderTexture != FRUIT)
+			    cell->renderTexture = NONE;
 		}
 	}
 }
 
-void MoveSnake(SnakeData *snakeData, Cell map[20][20])
+void ManageArraySize(DynamicArray *dynamicArray)
 {
-	bool hasPlayerEatenFruit = false;
+    if (dynamicArray->capacity < dynamicArray->numberBodyParts + 2)
+    {
+        dynamicArray->capacity = (dynamicArray->capacity == 0) ? 4 : dynamicArray->capacity * 2;
+        BodyData *temp = realloc(dynamicArray->bodyData, sizeof(BodyData) * dynamicArray->capacity);
+        if (temp == NULL)
+        {
+            printf("Memory Allocation Error");
+        }
+        dynamicArray->bodyData = temp;
+    }
+}
 
-	UpdateHeadPos(snakeData, map);
+void CopyCellDataToArray(DynamicArray *dynamicArray, Cell *cell)
+{
+    dynamicArray->bodyData[dynamicArray->numberBodyParts].pos = cell->pos;
+	dynamicArray->bodyData[dynamicArray->numberBodyParts].renderTexture = cell->renderTexture;
+}
 
-	if (HasHeadEaten(snakeData, map))
-	{
-		map[snakeData->head.x][snakeData->head.y].containsFruit = false;
-		hasPlayerEatenFruit = true;
-	}
+void IncreaseSnakeSize(DynamicArray *dynamicArray, Cell *cell)
+{
+    dynamicArray->numberBodyParts++;
+    dynamicArray->bodyData[dynamicArray->numberBodyParts].pos = cell->pos;
+    dynamicArray->bodyData[dynamicArray->numberBodyParts].renderTexture = BODY;
+}
 
+void UpdateBodyPos(DynamicArray *dynamicArray, Cell *cell)
+{
+    switch(cell->cellDirData.futureDir)
+    {
+        case LEFT: dynamicArray->bodyData[dynamicArray->numberBodyParts].pos.x--; break;
+        case RIGHT: dynamicArray->bodyData[dynamicArray->numberBodyParts].pos.x++; break;
+        case UP: dynamicArray->bodyData[dynamicArray->numberBodyParts].pos.y--; break;
+        case DOWN: dynamicArray->bodyData[dynamicArray->numberBodyParts].pos.y++; break;
+    }
 
-	// Determine tail and body positions
-	BodyData *bodyData = NULL;
-	int capacity = 0;
-	int numberBodyParts = 0;
+    dynamicArray->numberBodyParts++;
+}
 
-    // should be function
-	for (int x = 0; x < 20; x++)
+void UpdateBody(Cell map[20][20], DynamicArray *dynamicArray, GameState *gameState)
+{
+    for (int x = 0; x < 20; x++)
 	{
 		for (int y = 0; y < 20; y++)
 		{
 			Cell *cell = &map[x][y];
 			if(cell->renderTexture == BODY || cell->renderTexture == TAIL)
 			{
-				if (capacity < numberBodyParts + 2)
-				{
-					capacity = (capacity == 0) ? 4 : capacity * 2;
-					BodyData *temp = realloc(bodyData, sizeof(BodyData) * capacity);
-					if (temp == NULL)
-					{
-						printf("Memory Allocation Error");
-					}
-					bodyData = temp;
-				}
-				bodyData[numberBodyParts].pos = cell->pos;
-				bodyData[numberBodyParts].renderTexture = cell->renderTexture;
-				
-				if (hasPlayerEatenFruit && cell->renderTexture == TAIL)
-                {
-					numberBodyParts++;
-                    bodyData[numberBodyParts].pos = cell->pos;
-                    bodyData[numberBodyParts].renderTexture = BODY;
-                    hasPlayerEatenFruit = false;
-                }
-                
-				switch(cell->cellDir)
-				{
-					case LEFT: bodyData[numberBodyParts].pos.x--; break;
-					case RIGHT: bodyData[numberBodyParts].pos.x++; break;
-					case UP: bodyData[numberBodyParts].pos.y--; break;
-					case DOWN: bodyData[numberBodyParts].pos.y++; break;
-				}
 
-				numberBodyParts++;
+                ManageArraySize(dynamicArray);
+				CopyCellDataToArray(dynamicArray, cell);
+                
+				if (gameState->hasHeadEatenFruit && cell->renderTexture == TAIL)
+                {
+					IncreaseSnakeSize(dynamicArray, cell);
+                    gameState->isFruitPlaced = false;
+                }
+                UpdateBodyPos(dynamicArray, cell);
 			}
 		}
 	}
+}
 
-	ClearBodyGraphics(map);
-
-    //should be function
-	for (int i = 0; i < numberBodyParts; i++)
+void PutSnakeOnMap(Cell map[20][20], DynamicArray *dynamicArray, SnakeData *snakeData, GameState *gameState)
+{
+	ClearGraphics(map);
+	map[snakeData->head.pos.x][snakeData->head.pos.y].renderTexture = HEAD;
+    for (int i = 0; i < dynamicArray->numberBodyParts; i++)
 	{
-		Cell *cell = &map[bodyData[i].pos.x][bodyData[i].pos.y];
-		cell->renderTexture = bodyData[i].renderTexture;
+		Cell *cell = &map[dynamicArray->bodyData[i].pos.x][dynamicArray->bodyData[i].pos.y];
+		cell->renderTexture = dynamicArray->bodyData[i].renderTexture;
 	}
-
-	free(bodyData);
+    GenerateFruit(map, gameState);
 }
 
