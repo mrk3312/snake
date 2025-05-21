@@ -4,11 +4,11 @@ bool IsHorizontal(Direction dir) {return dir == LEFT || dir == RIGHT;}
 bool IsVertical(Direction dir) {return dir == UP || dir == DOWN;}
 bool CanMovementBeUpdated(SnakeData *snakeData, GameState *gameState) {return snakeData->snakeDirData.futureDir != NOTCHANGED && !((IsHorizontal(snakeData->snakeDirData.currentDir) && IsHorizontal(snakeData->snakeDirData.futureDir)) || (IsVertical(snakeData->snakeDirData.currentDir) && IsVertical(snakeData->snakeDirData.futureDir))) && gameState->isHeadPosUpdated && gameState->initMovement;}
 bool DoesHeadTouchBodyOrBorder(SnakeData *snakeData, Cell map[20][20]) {
-	return map[snakeData->head.pos.x][snakeData->head.pos.y].isBorder || 
-	        (map[snakeData->head.pos.x][snakeData->head.pos.y].renderTexture == TAIL || 
-		    (map[snakeData->head.pos.x][snakeData->head.pos.y].renderTexture == BODY));
+	return map[snakeData->head.x][snakeData->head.y].isBorder || 
+	        (map[snakeData->head.x][snakeData->head.y].renderTexture == TAIL || 
+		    (map[snakeData->head.x][snakeData->head.y].renderTexture == BODY));
 }
-bool HasHeadEaten(SnakeData *snakeData, Cell map[20][20]) {return map[snakeData->head.pos.x][snakeData->head.pos.y].renderTexture == FRUIT;}
+bool HasHeadEaten(SnakeData *snakeData, Cell map[20][20]) {return map[snakeData->head.x][snakeData->head.y].renderTexture == FRUIT;}
 
 Direction DirectionKey(void)
 {
@@ -21,21 +21,19 @@ Direction DirectionKey(void)
 
 void UpdateSnakeDir(SnakeData *snakeData, GameState *gameState)
 {
-    snakeData->head.prevDir = snakeData->snakeDirData.currentDir;
     snakeData->snakeDirData.currentDir = snakeData->snakeDirData.futureDir;
     gameState->isHeadPosUpdated = false;
 }
 
 void UpdateHeadPos(SnakeData *snakeData, Cell map[20][20])
 {
-    map[snakeData->head.pos.x][snakeData->head.pos.y].cellDirData.futureDir = snakeData->snakeDirData.currentDir;
-    map[snakeData->head.pos.x][snakeData->head.pos.y].cellDirData.lastDir = snakeData->head.prevDir;
+    map[snakeData->head.x][snakeData->head.y].cellFutureDir = snakeData->snakeDirData.currentDir;
     switch (snakeData->snakeDirData.currentDir)
     {
-        case LEFT: snakeData->head.pos.x--; break;
-        case RIGHT: snakeData->head.pos.x++; break;
-        case UP: snakeData->head.pos.y--; break;
-        case DOWN: snakeData->head.pos.y++; break;
+        case LEFT: snakeData->head.x--; break;
+        case RIGHT: snakeData->head.x++; break;
+        case UP: snakeData->head.y--; break;
+        case DOWN: snakeData->head.y++; break;
         case NOTCHANGED: break;
     }
 }
@@ -82,7 +80,7 @@ void IncreaseSnakeSize(DynamicArray *dynamicArray, Cell *cell)
 
 void UpdateBodyPos(DynamicArray *dynamicArray, Cell *cell)
 {
-    switch(cell->cellDirData.futureDir)
+    switch(cell->cellFutureDir)
     {
         case LEFT: dynamicArray->bodyData[dynamicArray->numberBodyParts].pos.x--; break;
         case RIGHT: dynamicArray->bodyData[dynamicArray->numberBodyParts].pos.x++; break;
@@ -120,7 +118,7 @@ void UpdateBody(Cell map[20][20], DynamicArray *dynamicArray, GameState *gameSta
 void PutSnakeOnMap(Cell map[20][20], DynamicArray *dynamicArray, SnakeData *snakeData, GameState *gameState)
 {
 	ClearGraphics(map);
-	map[snakeData->head.pos.x][snakeData->head.pos.y].renderTexture = HEAD;
+	map[snakeData->head.x][snakeData->head.y].renderTexture = HEAD;
     for (int i = 0; i < dynamicArray->numberBodyParts; i++)
 	{
 		Cell *cell = &map[dynamicArray->bodyData[i].pos.x][dynamicArray->bodyData[i].pos.y];

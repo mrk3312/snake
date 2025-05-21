@@ -30,15 +30,8 @@ typedef struct Vec2
 	int x,y;
 }Vec2;
 
-typedef struct HeadData
-{
-	Vec2 pos;
-	Direction prevDir;
-} HeadData;
-
 typedef struct DirectionData
 {
-	Direction lastDir;
 	Direction currentDir;
 	Direction futureDir;
 } DirectionData;
@@ -47,14 +40,14 @@ typedef struct Cell
 {
 	Vec2 pos;
 	GameTexture renderTexture;
-	DirectionData cellDirData;
+	Direction cellFutureDir;
 	bool isBorder;
 } Cell;
 
 typedef struct SnakeData
 {
 	DirectionData snakeDirData;
-	HeadData head;
+	Vec2 head;
 } SnakeData;
 
 typedef struct GameState

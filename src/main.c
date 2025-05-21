@@ -22,10 +22,8 @@ int main(void)
 			if (snakeData.snakeDirData.futureDir != NOTCHANGED && snakeData.snakeDirData.futureDir != LEFT)
 			{
 				gameState.initMovement = true;
-				map[3][9].cellDirData.lastDir = RIGHT;
-				map[3][9].cellDirData.futureDir = RIGHT;
-				map[4][9].cellDirData.lastDir = RIGHT;
-				map[4][9].cellDirData.futureDir  = RIGHT;
+				map[3][9].cellFutureDir = RIGHT;
+				map[4][9].cellFutureDir = RIGHT;
 			}
 		}
 
@@ -60,7 +58,7 @@ int main(void)
 			UpdateBody(map, &dynamicArray, &gameState);
 			PutSnakeOnMap(map, &dynamicArray, &snakeData, &gameState);
 			free(dynamicArray.bodyData);
-			skipTimer += 0.5f;
+			skipTimer += 1.0f;
 		}
 		ClearBackground(RAYWHITE);
 		BeginDrawing();

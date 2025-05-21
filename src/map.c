@@ -6,7 +6,6 @@ void InitGame(Cell map[20][20], SnakeData *snakeData)
 	InitWindow(1000, 1000, "Snake");
 	snakeData->snakeDirData.futureDir = NOTCHANGED;
 	snakeData->snakeDirData.currentDir = NOTCHANGED;
-	snakeData->head.prevDir = NOTCHANGED;
 	GenerateMap(map);
 	InitSnake(map, snakeData);
 }
@@ -17,7 +16,7 @@ void GenerateMap(Cell map[20][20])
 	{
 		for (int y = 0; y < 20; y++)
 		{
-			map[x][y] = (Cell){.pos.x = x, .pos.y = y, .cellDirData.lastDir = NOTCHANGED, .cellDirData.currentDir = NOTCHANGED, .cellDirData.futureDir = NOTCHANGED, .isBorder = (x == 0 || y == 0 || x == 19 || y == 19) ? true : false, .renderTexture = NONE};
+			map[x][y] = (Cell){.pos.x = x, .pos.y = y, .cellFutureDir = NOTCHANGED, .isBorder = (x == 0 || y == 0 || x == 19 || y == 19) ? true : false, .renderTexture = NONE};
 		}
 	}
 }
@@ -76,34 +75,13 @@ void RenderMap(Cell map[20][20], SnakeData *snakeData, GameState *gameState, Tex
 				}
 				case BODY:
 				{
-					// if((cell->cellDirData.lastDir == LEFT && cell->cellDirData.futureDir == LEFT))
-					// 	DrawTexturePro(*spriteSheet, (Rectangle){64, 0, 64, 64},(Rectangle){x * 50, y * 50, 50, 50}, (Vector2) {0, 0}, 0.0f, WHITE);
-					switch(cell->cellDirData.futureDir)
+					switch(cell->cellFutureDir)
 					{
 						case NOTCHANGED:
 						case LEFT:
 						case RIGHT:
 						{
-							switch (cell->cellDirData.lastDir)
-							{
-								case NOTCHANGED:
-								case LEFT:
-								case RIGHT:
-								{
-									DrawTexturePro(*spriteSheet, (Rectangle){64, 0, 64, 64},(Rectangle){x * 50, y * 50, 50, 50}, (Vector2) {0, 0}, 0.0f, WHITE);
-									break;
-								}
-								case UP:
-								{
-									DrawTexturePro(*spriteSheet, (Rectangle){128, 128, 64, 64},(Rectangle){x * 50, y * 50, 50, 50}, (Vector2) {0, 0}, 0.0f, WHITE);
-									break;
-								}
-								case DOWN:
-								{
-									DrawTexturePro(*spriteSheet, (Rectangle){0, 64, 64, 64},(Rectangle){x * 50, y * 50, 50, 50}, (Vector2) {0, 0}, 0.0f, WHITE);
-									break;
-								}
-							}
+							DrawTexturePro(*spriteSheet, (Rectangle){64, 0, 64, 64},(Rectangle){x * 50, y * 50, 50, 50}, (Vector2) {0, 0}, 0.0f, WHITE);
 							break;
 						}
 						case UP:
@@ -111,13 +89,13 @@ void RenderMap(Cell map[20][20], SnakeData *snakeData, GameState *gameState, Tex
 						{
 							DrawTexturePro(*spriteSheet, (Rectangle){128, 64, 64, 64},(Rectangle){x * 50, y * 50, 50, 50}, (Vector2) {0, 0}, 0.0f, WHITE);
 							break;
-						}		
+						}
 					}
 					break;
 				}
 				case TAIL:
 				{
-					switch(cell->cellDirData.futureDir)
+					switch(cell->cellFutureDir)
 					{
 						case LEFT:
 						{
@@ -174,8 +152,8 @@ void InitSnake(Cell map[20][20], SnakeData *snakeData)
 	map[3][9].renderTexture = TAIL;
 	map[4][9].renderTexture = BODY;
 	map[5][9].renderTexture = HEAD;
-	snakeData->head.pos.x = map[5][9].pos.x;
-	snakeData->head.pos.y = map[5][9].pos.y;
+	snakeData->head.x = map[5][9].pos.x;
+	snakeData->head.y = map[5][9].pos.y;
 }
 
 void InitGameState(GameState *gameState)
@@ -197,8 +175,7 @@ void RefreshGame(Cell map[20][20], SnakeData *snakeData, GameState *gameState)
 		{
 			Cell *cell = &map[x][y];
 			cell->renderTexture = NONE;
-			cell->cellDirData.futureDir = NOTCHANGED;
-			cell->cellDirData.currentDir = NOTCHANGED;
+			cell->cellFutureDir = NOTCHANGED;
 		}
 	}
 	InitSnake(map, snakeData);
